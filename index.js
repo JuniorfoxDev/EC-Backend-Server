@@ -13,8 +13,14 @@ const app = express();
 // Middleware
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
-app.use(cors());
-
+app.use(cors(
+    origin:['https://ec-backend-server.vercel.app/'],
+    methods:['POST','GET','PUT','DELETE'],
+    credentials:true
+));
+app.get('/',(req,res) => {
+    res.json('hello');
+}
 // Serve static files
 app.use('/files', express.static(path.join(__dirname, 'files')));
 
