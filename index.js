@@ -13,14 +13,16 @@ const app = express();
 // Middleware
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
-app.use(cors(
-    origin:['https://ec-backend-server.vercel.app/'],
-    methods:['POST','GET','PUT','DELETE'],
-    credentials:true
-));
-app.get('/',(req,res) => {
+app.use(cors({
+    origin: 'https://ec-backend-server.vercel.app',
+    methods: ['POST', 'GET', 'PUT', 'DELETE'],
+    credentials: true
+}));
+
+app.get('/', (req, res) => {
     res.json('hello');
-}
+});
+
 // Serve static files
 app.use('/files', express.static(path.join(__dirname, 'files')));
 
@@ -132,9 +134,7 @@ app.post('/api/upload', upload.array('images'), async (req, res) => {
 
         const filesData = await Promise.all(filePromises);
 
-        const filesToSave = filesData.map(fileData => {
-            return new File(fileData);
-        });
+        const filesToSave = filesData.map(fileData => new File(fileData));
 
         const savedFiles = await Promise.all(filesToSave.map(file => file.save()));
 
@@ -183,7 +183,7 @@ app.get('/api/products/:id', async (req, res) => {
 // Update product route
 app.put('/api/products/:id', upload.array('images'), async (req, res) => {
     const { id } = req.params;
-    
+
     const updateFields = {}; 
     if (req.body.name !== undefined) {
         updateFields.name = req.body.name;
@@ -236,7 +236,6 @@ app.put('/api/products/:id', upload.array('images'), async (req, res) => {
             updateFields.images = savedFiles;
         }
 
-        
         const updatedProduct = await Product.findByIdAndUpdate(id, updateFields, {
             new: true, 
             runValidators: false, 
@@ -290,11 +289,12 @@ app.delete('/api/products/:id', async (req, res) => {
         await Product.deleteOne({ _id: id });
         res.json({ message: "Product deleted successfully" });
     } catch (error) {
-        console.error('Error deleting product:',
- console.error('Error deleting product:', error);
+        console.error('Error deleting product:', error);
         res.status(500).json({ message: 'Server error' });
     }
 });
 
 // Vercel-specific export
-module.exports = app;
+module.exports = (req, res) => {
+    return app(req, res);
+};
