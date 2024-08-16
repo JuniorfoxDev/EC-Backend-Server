@@ -18,6 +18,7 @@ app.use(cors({
     methods: ['POST', 'GET', 'PUT', 'DELETE'],
     credentials: true
 }));
+
 app.get('/', (req, res) => {
     res.json('hello');
 });
@@ -201,6 +202,7 @@ app.put('/api/products/:id', upload.array('images'), async (req, res) => {
     if (req.body.sizes) {
         updateFields.sizes = Array.isArray(req.body.sizes) ? req.body.sizes : [req.body.sizes];
     }
+
     try {
         if (req.files && req.files.length > 0) {
             const filePromises = req.files.map(file => {
@@ -237,7 +239,7 @@ app.put('/api/products/:id', upload.array('images'), async (req, res) => {
 
         const updatedProduct = await Product.findByIdAndUpdate(id, updateFields, {
             new: true, 
-            runValidators: false, 
+            runValidators: false
         });
 
         if (!updatedProduct) {
@@ -285,15 +287,20 @@ app.get('/files/:filename', async (req, res) => {
 app.delete('/api/products/:id', async (req, res) => {
     const { id } = req.params;
     try {
-        await Product.deleteOne({ _id: id });
+        const product = await Product.findByIdAndDelete(id);
+        if (!product) {
+            return res.status(404).json({ message: "Product not found" });
+        }
+
+        // Delete associated images
+        await File.deleteMany({ _id: { $in: product.images } });
+
         res.json({ message: "Product deleted successfully" });
     } catch (error) {
         console.error('Error deleting product:', error);
         res.status(500).json({ message: 'Server error' });
     }
-});
-
-// Vercel-specific export
-module.exports = (req, res) => {
-    return app(req, res);
 };
+
+// Export the app for Vercel
+module.exports = app;
