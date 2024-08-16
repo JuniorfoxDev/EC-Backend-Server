@@ -27,7 +27,7 @@ app.get('/', (req, res) => {
 app.use('/files', express.static(path.join(__dirname, 'files')));
 
 // MongoDB URI
-const mongoURI = "mongodb+srv://vaibhavmeshram2908:vaibhav123@cluster0.1pkf5.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+const mongoURI = process.env.MONGO_URI || "mongodb+srv://vaibhavmeshram2908:vaibhav123@cluster0.1pkf5.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
 
 // Connect to MongoDB
 mongoose.connect(mongoURI, {
@@ -75,7 +75,7 @@ app.post('/api/register', async (req, res) => {
         const savedUser = await newUser.save();
         res.status(201).json(savedUser);
     } catch (error) {
-        console.log(error);
+        console.error('Error in /api/register:', error);
         res.status(500).json({ message: 'Server error' });
     }
 });
@@ -94,7 +94,7 @@ app.post('/api/login', async (req, res) => {
         }
         res.json({ message: "Login successful" });
     } catch (error) {
-        console.log(error);
+        console.error('Error in /api/login:', error);
         res.status(500).json({ message: 'Server error' });
     }
 });
@@ -149,7 +149,7 @@ app.post('/api/upload', upload.array('images'), async (req, res) => {
         const savedProduct = await newProduct.save();
         res.status(201).json(savedProduct);
     } catch (error) {
-        console.error(error);
+        console.error('Error in /api/upload:', error);
         res.status(500).json({ message: 'Server error' });
     }
 });
@@ -160,7 +160,7 @@ app.get('/api/products', async (req, res) => {
         const products = await Product.find().exec();
         res.json(products);
     } catch (error) {
-        console.error('Error fetching products:', error);
+        console.error('Error in /api/products:', error);
         res.status(500).json({ message: 'Server error' });
     }
 });
@@ -175,7 +175,7 @@ app.get('/api/products/:id', async (req, res) => {
         }
         res.json(product);
     } catch (error) {
-        console.error('Error fetching product:', error);
+        console.error('Error in /api/products/:id:', error);
         res.status(500).json({ message: 'Server error' });
     }
 });
@@ -248,7 +248,7 @@ app.put('/api/products/:id', upload.array('images'), async (req, res) => {
 
         res.json(updatedProduct);
     } catch (error) {
-        console.error('Error updating product:', error);
+        console.error('Error in /api/products/:id (PUT):', error);
         res.status(500).json({ message: 'Server error' });
     }
 });
@@ -270,7 +270,7 @@ app.get('/files/:filename', async (req, res) => {
         });
 
         downloadStream.on('error', (err) => {
-            console.error(err);
+            console.error('Error streaming file:', err);
             res.sendStatus(404);
         });
 
@@ -278,7 +278,7 @@ app.get('/files/:filename', async (req, res) => {
             res.end();
         });
     } catch (error) {
-        console.error(error);
+        console.error('Error in /files/:filename:', error);
         res.status(500).json({ message: 'Server error' });
     }
 });
@@ -297,10 +297,10 @@ app.delete('/api/products/:id', async (req, res) => {
 
         res.json({ message: "Product deleted successfully" });
     } catch (error) {
-        console.error('Error deleting product:', error);
+        console.error('Error in /api/products/:id (DELETE):', error);
         res.status(500).json({ message: 'Server error' });
     }
-};
+});
 
 // Export the app for Vercel
 module.exports = app;
