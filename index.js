@@ -67,7 +67,7 @@ client.connect().then(() => {
 });
 
 // Register route
-app.post('/api/register', async (req, res) => {
+app.post('/register', async (req, res) => {
     const { name, email, password } = req.body;
     try {
         const hashedPassword = await bcrypt.hash(password, saltRounds);
