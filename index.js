@@ -116,7 +116,7 @@ app.post('/api/upload', upload.array('images'), async (req, res) => {
                         filename: file.originalname,
                         contentType: file.mimetype,
                         length: file.size,
-                        url: `https://your-vercel-domain.com/files/${uploadStream.filename}` // Update to your Vercel domain
+                        url: `https://ec-backend-server.vercel.app/files/${uploadStream.filename}` // Update to your Vercel domain
                     });
                 });
 
@@ -213,7 +213,7 @@ app.put('/api/products/:id', upload.array('images'), async (req, res) => {
                             filename: file.originalname,
                             contentType: file.mimetype,
                             length: file.size,
-                            url: `https://your-vercel-domain.com/files/${uploadStream.filename}`, // Update to your Vercel domain
+                            url: `https://ec-backend-server.vercel.app/files/${uploadStream.filename}`, // Update to your Vercel domain
                         });
                     });
 
