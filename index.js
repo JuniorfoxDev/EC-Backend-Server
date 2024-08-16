@@ -6,8 +6,9 @@ const { MongoClient, GridFSBucket } = require('mongodb');
 const bcrypt = require('bcrypt');
 const { Readable } = require('stream');
 const path = require('path');
-const app = express();
+
 const saltRounds = 10;
+const app = express();
 
 // Middleware
 app.use(express.json({ limit: '50mb' }));
@@ -32,9 +33,11 @@ mongoose.connect(mongoURI, {
     console.error('Error connecting to MongoDB:', error);
 });
 
-// User model
-const User = require('./models/Register')
-const Product = require('./models/Product')
+// Models
+const User = require('./models/Register');
+const Product = require('./models/Product');
+const File = require('./models/File');
+
 // Multer setup
 const storage = multer.memoryStorage();
 const upload = multer({ storage, limits: { fileSize: 50 * 1024 * 1024 } });
@@ -56,7 +59,7 @@ client.connect().then(() => {
 });
 
 // Register route
-app.post('/register', async (req, res) => {
+app.post('/api/register', async (req, res) => {
     const { name, email, password } = req.body;
     try {
         const hashedPassword = await bcrypt.hash(password, saltRounds);
@@ -70,7 +73,7 @@ app.post('/register', async (req, res) => {
 });
 
 // Login route
-app.post('/login', async (req, res) => {
+app.post('/api/login', async (req, res) => {
     const { email, password } = req.body;
     try {
         const user = await User.findOne({ email });
@@ -89,7 +92,7 @@ app.post('/login', async (req, res) => {
 });
 
 // File upload route
-app.post('/upload', upload.array('images'), async (req, res) => {
+app.post('/api/upload', upload.array('images'), async (req, res) => {
     const files = req.files;
     const { name, price, description, sizes } = req.body;
 
@@ -113,7 +116,7 @@ app.post('/upload', upload.array('images'), async (req, res) => {
                         filename: file.originalname,
                         contentType: file.mimetype,
                         length: file.size,
-                        url: `http://localhost:3001/files/${uploadStream.filename}`
+                        url: `https://your-vercel-domain.com/files/${uploadStream.filename}` // Update to your Vercel domain
                     });
                 });
 
@@ -144,8 +147,9 @@ app.post('/upload', upload.array('images'), async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 });
+
 // Get all products route
-app.get('/products', async (req, res) => {
+app.get('/api/products', async (req, res) => {
     try {
         const products = await Product.find().exec();
         res.json(products);
@@ -156,7 +160,7 @@ app.get('/products', async (req, res) => {
 });
 
 // Get single product route
-app.get('/products/:id', async (req, res) => {
+app.get('/api/products/:id', async (req, res) => {
     const { id } = req.params;
     try {
         const product = await Product.findById(id).exec();
@@ -169,10 +173,9 @@ app.get('/products/:id', async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 });
-const File = require('./models/File')
 
 // Update product route
-app.put('/products/:id', upload.array('images'), async (req, res) => {
+app.put('/api/products/:id', upload.array('images'), async (req, res) => {
     const { id } = req.params;
     
     const updateFields = {}; 
@@ -210,7 +213,7 @@ app.put('/products/:id', upload.array('images'), async (req, res) => {
                             filename: file.originalname,
                             contentType: file.mimetype,
                             length: file.size,
-                            url: `http://localhost:3001/files/${uploadStream.filename}`,
+                            url: `https://your-vercel-domain.com/files/${uploadStream.filename}`, // Update to your Vercel domain
                         });
                     });
 
@@ -244,6 +247,7 @@ app.put('/products/:id', upload.array('images'), async (req, res) => {
     }
 });
 
+// File retrieval route
 app.get('/files/:filename', async (req, res) => {
     try {
         const { filename } = req.params;
@@ -274,16 +278,17 @@ app.get('/files/:filename', async (req, res) => {
 });
 
 // Delete product route
-app.delete('/products/:id', async (req, res) => {
+app.delete('/api/products/:id', async (req, res) => {
     const { id } = req.params;
     try {
         await Product.deleteOne({ _id: id });
         res.json({ message: "Product deleted successfully" });
     } catch (error) {
-        console.error('Error deleting product:', error);
+        console.error('Error deleting product:',
+ console.error('Error deleting product:', error);
         res.status(500).json({ message: 'Server error' });
     }
 });
-app.listen(3001, () => {
-    console.log("Server is running on port 3001");
-});
+
+// Vercel-specific export
+module.exports = app;
