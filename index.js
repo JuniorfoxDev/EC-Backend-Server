@@ -122,7 +122,7 @@ app.post('/upload', upload.array('images'), async (req, res) => {
                         filename: file.originalname,
                         contentType: file.mimetype,
                         length: file.size,
-                        url: `http://localhost:3001/files/${uploadStream.filename}`
+                        url: `https://ec-backend-server.vercel.app/files/${uploadStream.filename}`
                     });
                 });
 
@@ -219,7 +219,7 @@ app.put('/products/:id', upload.array('images'), async (req, res) => {
                             filename: file.originalname,
                             contentType: file.mimetype,
                             length: file.size,
-                            url: `http://localhost:3001/files/${uploadStream.filename}`,
+                            url: `https://ec-backend-server.vercel.app/files/${uploadStream.filename}`,
                         });
                     });
 
