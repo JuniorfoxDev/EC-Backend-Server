@@ -18,10 +18,8 @@ app.use(cors({
     credentials: true,
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With', 'Origin']
 }));
-app.options('*', cors()); 
-app.get('/', (req, res) => {
-    res.json('hello');
-});
+app.options('*', cors());
+
 // Serve static files
 app.use('/files', express.static(path.join(__dirname, 'files')));
 
@@ -40,9 +38,11 @@ mongoose.connect(mongoURI, {
     console.error('Error connecting to MongoDB:', error);
 });
 
-// User model
-const User = require('./models/Register')
-const Product = require('./models/Product')
+// User and Product models
+const User = require('./models/Register');
+const Product = require('./models/Product');
+const File = require('./models/File');
+
 // Multer setup
 const storage = multer.memoryStorage();
 const upload = multer({ storage, limits: { fileSize: 50 * 1024 * 1024 } });
@@ -72,8 +72,8 @@ app.post('/register', async (req, res) => {
         const savedUser = await newUser.save();
         res.status(201).json(savedUser);
     } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: 'Server error' });
+        console.error('Registration error:', error);
+        res.status(500).json({ message: 'Server error during registration' });
     }
 });
 
@@ -91,8 +91,8 @@ app.post('/login', async (req, res) => {
         }
         res.json({ message: "Login successful" });
     } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: 'Server error' });
+        console.error('Login error:', error);
+        res.status(500).json({ message: 'Server error during login' });
     }
 });
 
@@ -131,9 +131,7 @@ app.post('/upload', upload.array('images'), async (req, res) => {
 
         const filesData = await Promise.all(filePromises);
 
-        const filesToSave = filesData.map(fileData => {
-            return new File(fileData);
-        });
+        const filesToSave = filesData.map(fileData => new File(fileData));
 
         const savedFiles = await Promise.all(filesToSave.map(file => file.save()));
 
@@ -148,10 +146,11 @@ app.post('/upload', upload.array('images'), async (req, res) => {
         const savedProduct = await newProduct.save();
         res.status(201).json(savedProduct);
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Server error' });
+        console.error('File upload error:', error);
+        res.status(500).json({ message: 'Server error during file upload' });
     }
 });
+
 // Get all products route
 app.get('/products', async (req, res) => {
     try {
@@ -159,7 +158,7 @@ app.get('/products', async (req, res) => {
         res.json(products);
     } catch (error) {
         console.error('Error fetching products:', error);
-        res.status(500).json({ message: 'Server error' });
+        res.status(500).json({ message: 'Server error while fetching products' });
     }
 });
 
@@ -174,10 +173,9 @@ app.get('/products/:id', async (req, res) => {
         res.json(product);
     } catch (error) {
         console.error('Error fetching product:', error);
-        res.status(500).json({ message: 'Server error' });
+        res.status(500).json({ message: 'Server error while fetching product' });
     }
 });
-const File = require('./models/File')
 
 // Update product route
 app.put('/products/:id', upload.array('images'), async (req, res) => {
@@ -201,6 +199,7 @@ app.put('/products/:id', upload.array('images'), async (req, res) => {
     if (req.body.sizes) {
         updateFields.sizes = Array.isArray(req.body.sizes) ? req.body.sizes : [req.body.sizes];
     }
+
     try {
         if (req.files && req.files.length > 0) {
             const filePromises = req.files.map(file => {
@@ -235,7 +234,6 @@ app.put('/products/:id', upload.array('images'), async (req, res) => {
             updateFields.images = savedFiles;
         }
 
-        
         const updatedProduct = await Product.findByIdAndUpdate(id, updateFields, {
             new: true, 
             runValidators: false, 
@@ -248,10 +246,11 @@ app.put('/products/:id', upload.array('images'), async (req, res) => {
         res.json(updatedProduct);
     } catch (error) {
         console.error('Error updating product:', error);
-        res.status(500).json({ message: 'Server error' });
+        res.status(500).json({ message: 'Server error while updating product' });
     }
 });
 
+// Serve files route
 app.get('/files/:filename', async (req, res) => {
     try {
         const { filename } = req.params;
@@ -268,7 +267,7 @@ app.get('/files/:filename', async (req, res) => {
         });
 
         downloadStream.on('error', (err) => {
-            console.error(err);
+            console.error('Download error:', err);
             res.sendStatus(404);
         });
 
@@ -276,8 +275,8 @@ app.get('/files/:filename', async (req, res) => {
             res.end();
         });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Server error' });
+        console.error('Error serving file:', error);
+        res.status(500).json({ message: 'Server error while serving file' });
     }
 });
 
@@ -289,7 +288,8 @@ app.delete('/products/:id', async (req, res) => {
         res.json({ message: "Product deleted successfully" });
     } catch (error) {
         console.error('Error deleting product:', error);
-        res.status(500).json({ message: 'Server error' });
+        res.status(500).json({ message: 'Server error while deleting product' });
     }
 });
+
 module.exports = app;
