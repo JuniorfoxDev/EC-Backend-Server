@@ -19,8 +19,9 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With', 'Origin']
 }));
 app.options('*', cors()); 
-app.get('api/', (req, res) => {
+app.get('/', (req, res) => {
     res.json('hello');
+    console.log("hi")
 });
 // Serve static files
 app.use('/files', express.static(path.join(__dirname, 'files')));
