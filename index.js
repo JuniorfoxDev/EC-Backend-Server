@@ -26,7 +26,7 @@ app.get('/', (req, res) => {
 app.use('/files', express.static(path.join(__dirname, 'files')));
 
 // MongoDB URI
-const mongoURI = "mongodb+srv://vaibhavmeshram2908:vaibhav123@cluster0.1pkf5.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+const mongoURI = process.env.MONGODB_URI;
 
 // Connect to MongoDB
 mongoose.connect(mongoURI, {
