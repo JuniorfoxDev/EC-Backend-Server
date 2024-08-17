@@ -13,7 +13,7 @@ const saltRounds = 10;
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(cors({
-    origin: 'https://ec-backend-client.vercel.app', // Update this to match your client URL
+    origin: 'https://ec-backend-client.vercel.app', 
     methods: ['POST', 'GET', 'PUT', 'DELETE', 'OPTIONS'],
     credentials: true,
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With', 'Origin']
