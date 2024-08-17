@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const multer = require('multer');
+const { MongoClient, GridFSBucket } = require('mongodb');
 const bcrypt = require('bcrypt');
 const { Readable } = require('stream');
 const path = require('path');
@@ -29,21 +30,17 @@ app.use('/files', express.static(path.join(__dirname, 'files')));
 const mongoURI = "mongodb+srv://vaibhavmeshram2908:vaibhav123@cluster0.1pkf5.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
 
 // Connect to MongoDB
-async function connectToMongoDB() {
-    try {
-      await mongoose.connect(mongoURI, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-        serverSelectionTimeoutMS: 30000,
-        bufferCommands: false // Disable buffering
-      });
-      console.log('Connected to MongoDB');
-      initApp();
-    } catch (error) {
-      console.error('Error connecting to MongoDB:', error);
-    }
-  }
-  async function initApp() {
+mongoose.connect(mongoURI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    serverSelectionTimeoutMS: 30000,
+    bufferCommands: false // Disable buffering
+}).then(() => {
+    console.log('Connected to MongoDB');
+}).catch(error => {
+    console.error('Error connecting to MongoDB:', error);
+});
+
 // User model
 const User = require('./models/Register')
 const Product = require('./models/Product')
@@ -281,7 +278,4 @@ app.delete('/products/:id', async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 });
-}
-connectToMongoDB();
-
 module.exports = app;
