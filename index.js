@@ -12,7 +12,7 @@ const app = express();
 const saltRounds = 10;
 
 // MongoDB URI
-const mongoURI = process.env.MONGODB_URI || "mongodb+srv://vaibhavmeshram2908:vaibhav123@cluster0.1pkf5.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+const mongoURI = "mongodb+srv://vaibhavmeshram2908:vaibhav123@cluster0.1pkf5.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
 
 // Multer setup
 const storage = multer.memoryStorage();
