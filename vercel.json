@@ -9,6 +9,9 @@
     }
   ],
   "routes": [
-    { "src": "/register", "dest": "/index.js" }
+    {
+      "src": "/(.*)",
+      "dest": "/index.js" // Ensure this points to your entry point
+    }
   ]
 }
