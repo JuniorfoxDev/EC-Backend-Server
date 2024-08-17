@@ -8,10 +8,7 @@
       }
     }
   ],
-  "functions": {
-    "api/**.js": {
-      "memory": 1024,
-      "maxDuration": 10
-    }
-  }
+  "routes": [
+    { "src": "/register", "dest": "/index.js" }
+  ]
 }
