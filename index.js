@@ -48,21 +48,6 @@ const Product = require('./models/Product')
 const storage = multer.memoryStorage();
 const upload = multer({ storage, limits: { fileSize: 50 * 1024 * 1024 } });
 
-// Connect to MongoDB using MongoClient and GridFSBucket
-const client = new MongoClient(mongoURI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-    serverSelectionTimeoutMS: 30000
-});
-
-let bucket;
-client.connect().then(() => {
-    const db = client.db('test'); // Replace 'test' with your database name
-    bucket = new GridFSBucket(db, { bucketName: 'uploads' });
-    console.log('Connected to MongoDB and GridFSBucket initialized.');
-}).catch(error => {
-    console.error('Error connecting to MongoDB:', error);
-});
 
 // Register route
 app.post('/register', async (req, res) => {
