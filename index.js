@@ -12,7 +12,7 @@ const app = express();
 const saltRounds = 10;
 
 // MongoDB URI
-const mongoURI = "mongodb+srv://vaibhavmeshram2908:vaibhav123@cluster0.1pkf5.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+const mongoURI = process.env.MONGODB_URI || "mongodb+srv://vaibhavmeshram2908:vaibhav123@cluster0.1pkf5.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
 
 // Multer setup
 const storage = multer.memoryStorage();
@@ -30,21 +30,21 @@ app.use(cors({
 app.options('*', cors());
 app.use('/files', express.static(path.join(__dirname, 'files')));
 
-// Initialize database connection
-let dbClient;
+// MongoDB connection
+let client;
 let bucket;
 
 const connectDB = async () => {
-    if (dbClient) return; // If already connected, do nothing
+    if (client && client.isConnected()) return; // If already connected, do nothing
 
     try {
-        dbClient = new MongoClient(mongoURI, {
+        client = new MongoClient(mongoURI, {
             useNewUrlParser: true,
             useUnifiedTopology: true,
             serverSelectionTimeoutMS: 30000
         });
-        await dbClient.connect();
-        const db = dbClient.db('test'); // Replace 'test' with your database name
+        await client.connect();
+        const db = client.db('test'); // Replace 'test' with your database name
         bucket = new GridFSBucket(db, { bucketName: 'uploads' });
         console.log('Database connected and GridFSBucket initialized.');
     } catch (error) {
@@ -58,8 +58,14 @@ connectDB().catch(error => {
     console.error('Initial database connection failed:', error);
 });
 
+// Import your models after DB connection
+const User = require('./models/Register');
+const Product = require('./models/Product');
+const File = require('./models/File');
+
 // Routes
 app.post('/register', async (req, res) => {
+    await connectDB();
     const { name, email, password } = req.body;
     try {
         const hashedPassword = await bcrypt.hash(password, saltRounds);
