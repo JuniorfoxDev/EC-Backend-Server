@@ -12,10 +12,10 @@
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "/" 
+      "dest": "/index.js" 
     }
   ],
   "env": {
-    "MONGODB_URI": "@MongoDB_URI"
+    "MONGODB_URI": "@mongodb-uri" 
   }
 }
