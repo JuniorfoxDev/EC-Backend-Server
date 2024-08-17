@@ -2,7 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const multer = require('multer');
-const { MongoClient, GridFSBucket } = require('mongodb');
+
 const bcrypt = require('bcrypt');
 const { Readable } = require('stream');
 const path = require('path');
