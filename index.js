@@ -13,12 +13,7 @@ const app = express();
 // Middleware
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
-app.use(cors({
-    origin: 'https://ec-backend-client.vercel.app',
-    methods: ['POST', 'GET', 'PUT', 'DELETE'],
-    credentials: true,
-    allowedHeaders: ['Content-Type', 'Accept', 'Accept-Language', 'Accept-Encoding']
-}));
+app.use(cors());
 app.options('*', cors()); 
 app.get('/', (req, res) => {
     res.json('hello');
