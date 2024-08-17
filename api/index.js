@@ -41,8 +41,8 @@ mongoose.connect(mongoURI, {
 });
 
 // User model
-const User = require('./models/Register')
-const Product = require('./models/Product')
+const User = require('../models/Register')
+const Product = require('../models/Product')
 // Multer setup
 const storage = multer.memoryStorage();
 const upload = multer({ storage, limits: { fileSize: 50 * 1024 * 1024 } });
@@ -177,7 +177,7 @@ app.get('/products/:id', async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 });
-const File = require('./models/File')
+const File = require('../models/File')
 
 // Update product route
 app.put('/products/:id', upload.array('images'), async (req, res) => {
