@@ -1,22 +1,13 @@
-const mongoose = require('mongoose');
-const { MongoClient, GridFSBucket } = require('mongodb');
 const express = require('express');
+const mongoose = require('mongoose');
 const cors = require('cors');
 const multer = require('multer');
+const { MongoClient, GridFSBucket } = require('mongodb');
 const bcrypt = require('bcrypt');
 const { Readable } = require('stream');
 const path = require('path');
-const serverless = require('serverless-http');
-
 const app = express();
 const saltRounds = 10;
-
-// MongoDB URI
-const mongoURI =  "mongodb+srv://vaibhavmeshram2908:vaibhav123@cluster0.1pkf5.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
-
-// Multer setup
-const storage = multer.memoryStorage();
-const upload = multer({ storage, limits: { fileSize: 50 * 1024 * 1024 } });
 
 // Middleware
 app.use(express.json({ limit: '50mb' }));
@@ -27,35 +18,54 @@ app.use(cors({
     credentials: true,
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With', 'Origin']
 }));
-app.options('*', cors());
+app.options('*', cors()); 
+app.get('/', (req, res) => {
+    res.json('hello');
+    console.log("hi")
+});
+// Serve static files
 app.use('/files', express.static(path.join(__dirname, 'files')));
 
-// Database connection
-let dbClient;
+// MongoDB URI
+const mongoURI = "mongodb+srv://vaibhavmeshram2908:vaibhav123@cluster0.1pkf5.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+
+// Connect to MongoDB
+mongoose.connect(mongoURI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    serverSelectionTimeoutMS: 30000,
+    bufferCommands: false // Disable buffering
+}).then(() => {
+    console.log('Connected to MongoDB');
+}).catch(error => {
+    console.error('Error connecting to MongoDB:', error);
+});
+
+// User model
+const User = require('./models/Register')
+const Product = require('./models/Product')
+// Multer setup
+const storage = multer.memoryStorage();
+const upload = multer({ storage, limits: { fileSize: 50 * 1024 * 1024 } });
+
+// Connect to MongoDB using MongoClient and GridFSBucket
+const client = new MongoClient(mongoURI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    serverSelectionTimeoutMS: 30000
+});
+
 let bucket;
+client.connect().then(() => {
+    const db = client.db('test'); // Replace 'test' with your database name
+    bucket = new GridFSBucket(db, { bucketName: 'uploads' });
+    console.log('Connected to MongoDB and GridFSBucket initialized.');
+}).catch(error => {
+    console.error('Error connecting to MongoDB:', error);
+});
 
-const connectDB = async () => {
-    if (dbClient) return; // If already connected, do nothing
-
-    try {
-        dbClient = new MongoClient(mongoURI, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true,
-            serverSelectionTimeoutMS: 30000
-        });
-        await dbClient.connect();
-        const db = dbClient.db('test'); // Replace 'test' with your database name
-        bucket = new GridFSBucket(db, { bucketName: 'uploads' });
-        console.log('Database connected and GridFSBucket initialized.');
-    } catch (error) {
-        console.error('Error connecting to MongoDB:', error);
-        throw new Error('Database connection failed');
-    }
-};
-
-// Routes
+// Register route
 app.post('/register', async (req, res) => {
-    await connectDB();
     const { name, email, password } = req.body;
     try {
         const hashedPassword = await bcrypt.hash(password, saltRounds);
@@ -70,7 +80,6 @@ app.post('/register', async (req, res) => {
 
 // Login route
 app.post('/login', async (req, res) => {
-    await connectDB();
     const { email, password } = req.body;
     try {
         const user = await User.findOne({ email });
@@ -90,7 +99,6 @@ app.post('/login', async (req, res) => {
 
 // File upload route
 app.post('/upload', upload.array('images'), async (req, res) => {
-    await connectDB();
     const files = req.files;
     const { name, price, description, sizes } = req.body;
 
@@ -124,7 +132,9 @@ app.post('/upload', upload.array('images'), async (req, res) => {
 
         const filesData = await Promise.all(filePromises);
 
-        const filesToSave = filesData.map(fileData => new File(fileData));
+        const filesToSave = filesData.map(fileData => {
+            return new File(fileData);
+        });
 
         const savedFiles = await Promise.all(filesToSave.map(file => file.save()));
 
@@ -143,10 +153,8 @@ app.post('/upload', upload.array('images'), async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 });
-
 // Get all products route
 app.get('/products', async (req, res) => {
-    await connectDB();
     try {
         const products = await Product.find().exec();
         res.json(products);
@@ -158,7 +166,6 @@ app.get('/products', async (req, res) => {
 
 // Get single product route
 app.get('/products/:id', async (req, res) => {
-    await connectDB();
     const { id } = req.params;
     try {
         const product = await Product.findById(id).exec();
@@ -171,10 +178,10 @@ app.get('/products/:id', async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 });
+const File = require('./models/File')
 
 // Update product route
 app.put('/products/:id', upload.array('images'), async (req, res) => {
-    await connectDB();
     const { id } = req.params;
     
     const updateFields = {}; 
@@ -229,6 +236,7 @@ app.put('/products/:id', upload.array('images'), async (req, res) => {
             updateFields.images = savedFiles;
         }
 
+        
         const updatedProduct = await Product.findByIdAndUpdate(id, updateFields, {
             new: true, 
             runValidators: false, 
@@ -245,9 +253,37 @@ app.put('/products/:id', upload.array('images'), async (req, res) => {
     }
 });
 
+app.get('/files/:filename', async (req, res) => {
+    try {
+        const { filename } = req.params;
+        const file = await bucket.find({ filename }).toArray();
+
+        if (!file || file.length === 0) {
+            return res.status(404).json({ message: "File not found" });
+        }
+
+        const downloadStream = bucket.openDownloadStreamByName(filename);
+
+        downloadStream.on('data', (chunk) => {
+            res.write(chunk);
+        });
+
+        downloadStream.on('error', (err) => {
+            console.error(err);
+            res.sendStatus(404);
+        });
+
+        downloadStream.on('end', () => {
+            res.end();
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
 // Delete product route
 app.delete('/products/:id', async (req, res) => {
-    await connectDB();
     const { id } = req.params;
     try {
         await Product.deleteOne({ _id: id });
@@ -257,6 +293,4 @@ app.delete('/products/:id', async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 });
-
-// Export the serverless function
-module.exports.handler = serverless(app);
+module.exports = app;
