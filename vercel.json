@@ -15,4 +15,7 @@
       "dest": "/" 
     }
   ]
+  "env": {
+    "MONGODB_URI": "@mongodb-uri"
+  }
 }
