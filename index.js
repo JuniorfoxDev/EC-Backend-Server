@@ -19,7 +19,9 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With', 'Origin']
 }));
 app.options('*', cors());
-
+app.get('/',(req,res)){
+    res.json('Helloo");
+}
 // Serve static files
 app.use('/files', express.static(path.join(__dirname, 'files')));
 
