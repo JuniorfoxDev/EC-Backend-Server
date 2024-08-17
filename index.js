@@ -6,9 +6,8 @@ const { MongoClient, GridFSBucket } = require('mongodb');
 const bcrypt = require('bcrypt');
 const { Readable } = require('stream');
 const path = require('path');
-
-const saltRounds = 10;
 const app = express();
+const saltRounds = 10;
 
 // Middleware
 app.use(express.json({ limit: '50mb' }));
@@ -23,7 +22,6 @@ app.options('*', cors());
 app.get('/', (req, res) => {
     res.json('hello');
 });
-
 // Serve static files
 app.use('/files', express.static(path.join(__dirname, 'files')));
 
@@ -42,11 +40,9 @@ mongoose.connect(mongoURI, {
     console.error('Error connecting to MongoDB:', error);
 });
 
-// Models
-const User = require('./models/Register');
-const Product = require('./models/Product');
-const File = require('./models/File');
-
+// User model
+const User = require('./models/Register')
+const Product = require('./models/Product')
 // Multer setup
 const storage = multer.memoryStorage();
 const upload = multer({ storage, limits: { fileSize: 50 * 1024 * 1024 } });
@@ -76,13 +72,13 @@ app.post('/register', async (req, res) => {
         const savedUser = await newUser.save();
         res.status(201).json(savedUser);
     } catch (error) {
-        console.error('Error in /api/register:', error);
+        console.log(error);
         res.status(500).json({ message: 'Server error' });
     }
 });
 
 // Login route
-app.post('/api/login', async (req, res) => {
+app.post('/login', async (req, res) => {
     const { email, password } = req.body;
     try {
         const user = await User.findOne({ email });
@@ -95,13 +91,13 @@ app.post('/api/login', async (req, res) => {
         }
         res.json({ message: "Login successful" });
     } catch (error) {
-        console.error('Error in /api/login:', error);
+        console.log(error);
         res.status(500).json({ message: 'Server error' });
     }
 });
 
 // File upload route
-app.post('/api/upload', upload.array('images'), async (req, res) => {
+app.post('/upload', upload.array('images'), async (req, res) => {
     const files = req.files;
     const { name, price, description, sizes } = req.body;
 
@@ -125,7 +121,7 @@ app.post('/api/upload', upload.array('images'), async (req, res) => {
                         filename: file.originalname,
                         contentType: file.mimetype,
                         length: file.size,
-                        url: `https://ec-backend-server.vercel.app/files/${uploadStream.filename}` // Update to your Vercel domain
+                        url: `http://localhost:3001/files/${uploadStream.filename}`
                     });
                 });
 
@@ -135,7 +131,9 @@ app.post('/api/upload', upload.array('images'), async (req, res) => {
 
         const filesData = await Promise.all(filePromises);
 
-        const filesToSave = filesData.map(fileData => new File(fileData));
+        const filesToSave = filesData.map(fileData => {
+            return new File(fileData);
+        });
 
         const savedFiles = await Promise.all(filesToSave.map(file => file.save()));
 
@@ -150,24 +148,23 @@ app.post('/api/upload', upload.array('images'), async (req, res) => {
         const savedProduct = await newProduct.save();
         res.status(201).json(savedProduct);
     } catch (error) {
-        console.error('Error in /api/upload:', error);
+        console.error(error);
         res.status(500).json({ message: 'Server error' });
     }
 });
-
 // Get all products route
-app.get('/api/products', async (req, res) => {
+app.get('/products', async (req, res) => {
     try {
         const products = await Product.find().exec();
         res.json(products);
     } catch (error) {
-        console.error('Error in /api/products:', error);
+        console.error('Error fetching products:', error);
         res.status(500).json({ message: 'Server error' });
     }
 });
 
 // Get single product route
-app.get('/api/products/:id', async (req, res) => {
+app.get('/products/:id', async (req, res) => {
     const { id } = req.params;
     try {
         const product = await Product.findById(id).exec();
@@ -176,15 +173,16 @@ app.get('/api/products/:id', async (req, res) => {
         }
         res.json(product);
     } catch (error) {
-        console.error('Error in /api/products/:id:', error);
+        console.error('Error fetching product:', error);
         res.status(500).json({ message: 'Server error' });
     }
 });
+const File = require('./models/File')
 
 // Update product route
-app.put('/api/products/:id', upload.array('images'), async (req, res) => {
+app.put('/products/:id', upload.array('images'), async (req, res) => {
     const { id } = req.params;
-
+    
     const updateFields = {}; 
     if (req.body.name !== undefined) {
         updateFields.name = req.body.name;
@@ -203,7 +201,6 @@ app.put('/api/products/:id', upload.array('images'), async (req, res) => {
     if (req.body.sizes) {
         updateFields.sizes = Array.isArray(req.body.sizes) ? req.body.sizes : [req.body.sizes];
     }
-
     try {
         if (req.files && req.files.length > 0) {
             const filePromises = req.files.map(file => {
@@ -221,7 +218,7 @@ app.put('/api/products/:id', upload.array('images'), async (req, res) => {
                             filename: file.originalname,
                             contentType: file.mimetype,
                             length: file.size,
-                            url: `https://ec-backend-server.vercel.app/files/${uploadStream.filename}`, // Update to your Vercel domain
+                            url: `http://localhost:3001/files/${uploadStream.filename}`,
                         });
                     });
 
@@ -238,9 +235,10 @@ app.put('/api/products/:id', upload.array('images'), async (req, res) => {
             updateFields.images = savedFiles;
         }
 
+        
         const updatedProduct = await Product.findByIdAndUpdate(id, updateFields, {
             new: true, 
-            runValidators: false
+            runValidators: false, 
         });
 
         if (!updatedProduct) {
@@ -249,12 +247,11 @@ app.put('/api/products/:id', upload.array('images'), async (req, res) => {
 
         res.json(updatedProduct);
     } catch (error) {
-        console.error('Error in /api/products/:id (PUT):', error);
+        console.error('Error updating product:', error);
         res.status(500).json({ message: 'Server error' });
     }
 });
 
-// File retrieval route
 app.get('/files/:filename', async (req, res) => {
     try {
         const { filename } = req.params;
@@ -271,7 +268,7 @@ app.get('/files/:filename', async (req, res) => {
         });
 
         downloadStream.on('error', (err) => {
-            console.error('Error streaming file:', err);
+            console.error(err);
             res.sendStatus(404);
         });
 
@@ -279,29 +276,20 @@ app.get('/files/:filename', async (req, res) => {
             res.end();
         });
     } catch (error) {
-        console.error('Error in /files/:filename:', error);
+        console.error(error);
         res.status(500).json({ message: 'Server error' });
     }
 });
 
 // Delete product route
-app.delete('/api/products/:id', async (req, res) => {
+app.delete('/products/:id', async (req, res) => {
     const { id } = req.params;
     try {
-        const product = await Product.findByIdAndDelete(id);
-        if (!product) {
-            return res.status(404).json({ message: "Product not found" });
-        }
-
-        // Delete associated images
-        await File.deleteMany({ _id: { $in: product.images } });
-
+        await Product.deleteOne({ _id: id });
         res.json({ message: "Product deleted successfully" });
     } catch (error) {
-        console.error('Error in /api/products/:id (DELETE):', error);
+        console.error('Error deleting product:', error);
         res.status(500).json({ message: 'Server error' });
     }
 });
-
-// Export the app for Vercel
 module.exports = app;
