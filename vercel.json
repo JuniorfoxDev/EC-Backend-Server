@@ -11,7 +11,7 @@
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "/index.js" // Ensure this points to your entry point
+      "dest": "/index.js" 
     }
   ]
 }
