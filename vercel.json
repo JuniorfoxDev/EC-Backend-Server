@@ -9,6 +9,6 @@
     }
   ],
   "routes": [
-    { "src": "/register", "dest": "/index.js" }
+    { "src": "/register", "dest": "/register.js" }
   ]
 }
