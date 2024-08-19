@@ -283,7 +283,23 @@ app.get('/files/:filename', async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 });
-
+app.get('/categories', async (req,res) => {
+    try {
+        const categories = await Product.find({});
+        res.json(categories);        
+    } catch (error) {
+        console.log(error)
+    }
+})
+app.get('/categories/:subcategory', async (req,res) => {
+    const {subcategory} =req.params
+    try {
+        const products = await Product.find({subcategory});
+        res.json(products);
+    } catch (error) {
+        console.log(error)
+    }
+})
 // Delete product route
 app.delete('/products/:id', async (req, res) => {
     const { id } = req.params;
