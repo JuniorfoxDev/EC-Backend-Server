@@ -9,7 +9,9 @@ const productSchema = new mongoose.Schema({
         filename: String,
         id: mongoose.Schema.Types.ObjectId,
         url: String
-    }]
+    }],
+    category: {type: String, required : true},
+    subcategory: {type: String, required : true},
 });
 
 const Product = mongoose.model('Product', productSchema);

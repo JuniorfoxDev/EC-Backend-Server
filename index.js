@@ -100,7 +100,7 @@ app.post('/login', async (req, res) => {
 // File upload route
 app.post('/upload', upload.array('images'), async (req, res) => {
     const files = req.files;
-    const { name, price, description, sizes } = req.body;
+    const { name, price, description, sizes , category, subcategory} = req.body;
 
     if (!files || files.length === 0) {
         return res.status(400).send('No files were uploaded.');
@@ -143,7 +143,9 @@ app.post('/upload', upload.array('images'), async (req, res) => {
             price,
             description,
             sizes: Array.isArray(sizes) ? sizes : [sizes],
-            images: savedFiles
+            images: savedFiles,
+            category,
+            subcategory,
         });
 
         const savedProduct = await newProduct.save();
