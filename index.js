@@ -283,23 +283,31 @@ app.get('/files/:filename', async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 });
-app.get('/categories', async (req,res) => {
+app.get('/categories', async (req, res) => {
     try {
-        const categories = await Product.find({});
-        res.json(categories);        
+        const categories = await Product.distinct('category');
+        const result = await Promise.all(categories.map(async (category) => {
+            const subcategories = await Product.distinct('subcategory', { category });
+            return { category, subcategory: subcategories };
+        }));
+        res.json(result);
     } catch (error) {
-        console.log(error)
+        console.log(error);
+        res.status(500).json({ message: 'Server error' });
     }
-})
-app.get('/categories/:subcategory', async (req,res) => {
-    const {subcategory} =req.params
+});
+
+app.get('/categories/:subcategory', async (req, res) => {
+    const { subcategory } = req.params;
     try {
-        const products = await Product.find({subcategory});
+        const products = await Product.find({ subcategory });
         res.json(products);
     } catch (error) {
-        console.log(error)
+        console.log(error);
+        res.status(500).json({ message: 'Server error' });
     }
-})
+});
+
 // Delete product route
 app.delete('/products/:id', async (req, res) => {
     const { id } = req.params;
