@@ -16,7 +16,8 @@ app.use(cors({
     origin: ['https://ec-backend-client.vercel.app','https://ec-frontend-chi.vercel.app'], 
     methods: ['POST', 'GET', 'PUT', 'DELETE', 'OPTIONS'],
     credentials: true,
-    allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With', 'Origin']
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With', 'Origin'],
+    optionsSuccessStatus: 200 
 }));
 app.options('*', cors()); 
 app.get('/', (req, res) => {
