@@ -253,32 +253,38 @@ app.put('/products/:id', upload.array('images'), async (req, res) => {
 app.use('/files', express.static(path.join(__dirname, 'files')));
 // File download route
 app.get('/files/:filename', async (req, res) => {
-  try {
-    const { filename } = req.params;
-    const file = await bucket.find({ filename }).toArray();
+    try {
+        const { filename } = req.params;
+        
+        // Find file by filename
+        const file = await bucket.find({ filename }).toArray();
 
-    if (!file || file.length === 0) {
-      return res.status(404).json({ message: "File not found" });
+        if (!file || file.length === 0) {
+            return res.status(404).json({ message: "File not found" });
+        }
+
+        // Open a download stream for the file
+        const downloadStream = bucket.openDownloadStreamByName(filename);
+
+        // Set the correct Content-Type if known
+        res.setHeader('Content-Type', file[0].contentType || 'application/octet-stream');
+
+        downloadStream.on('data', (chunk) => {
+            res.write(chunk);
+        });
+
+        downloadStream.on('error', (err) => {
+            console.error('Stream error:', err);
+            res.sendStatus(500);
+        });
+
+        downloadStream.on('end', () => {
+            res.end();
+        });
+    } catch (error) {
+        console.error('Server error:', error);
+        res.status(500).json({ message: 'Server error' });
     }
-
-    const downloadStream = bucket.openDownloadStreamByName(filename);
-
-    downloadStream.on('data', (chunk) => {
-      res.write(chunk);
-    });
-
-    downloadStream.on('error', (err) => {
-      console.error(err);
-      res.sendStatus(500);
-    });
-
-    downloadStream.on('end', () => {
-      res.end();
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error' });
-  }
 });
 
 // Categories route
