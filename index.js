@@ -267,6 +267,7 @@ app.get('/files/:filename', async (req, res) => {
         const downloadStream = bucket.openDownloadStreamByName(filename);
 
         // Set the correct Content-Type if known
+       res.setHeader('Access-Control-Allow-Origin', 'https://ec-frontend-chi.vercel.app');
         res.setHeader('Content-Type', file[0].contentType || 'application/octet-stream');
 
         downloadStream.on('data', (chunk) => {
