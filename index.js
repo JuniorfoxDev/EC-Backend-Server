@@ -250,7 +250,7 @@ app.put('/products/:id', upload.array('images'), async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 });
-
+app.use('/files', express.static(path.join(__dirname, 'files')));
 // File download route
 app.get('/files/:filename', async (req, res) => {
   try {
