@@ -12,14 +12,24 @@ const saltRounds = 10;
 // Middleware
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
-app.use(cors({
-    origin: ['https://ec-backend-client.vercel.app','https://ec-frontend-chi.vercel.app'], 
-    methods: ['POST', 'GET', 'PUT', 'DELETE', 'OPTIONS'],
-    credentials: true,
-    allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With', 'Origin'],
-    optionsSuccessStatus: 200 
-}));
-app.options('*', cors()); 
+// app.use(cors({
+//     origin: ['https://ec-backend-client.vercel.app','https://ec-frontend-chi.vercel.app'], 
+//     methods: ['POST', 'GET', 'PUT', 'DELETE', 'OPTIONS'],
+//     credentials: true,
+//     allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With', 'Origin'],
+//     optionsSuccessStatus: 200 
+// }));
+// app.options('*', cors()); 
+const corsOptions = {
+  origin: ['https://ec-backend-client.vercel.app', 'https://ec-frontend-chi.vercel.app'],
+  methods: ['POST', 'GET', 'PUT', 'DELETE', 'OPTIONS'],
+  credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With', 'Origin'],
+  optionsSuccessStatus: 200
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 app.get('/', (req, res) => {
     res.json('hello');
     console.log("hi")
