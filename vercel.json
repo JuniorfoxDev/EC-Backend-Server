@@ -12,9 +12,19 @@
   ],
   "routes": [
     {
+      "src": "/files/(.*)",
+      "dest": "/index.js",
+      "headers": {
+        "Access-Control-Allow-Origin": "*", // Update this for production
+        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization"
+      },
+      "methods": ["GET", "OPTIONS"]
+    },
+    {
       "src": "/(.*)",
       "dest": "/index.js",
-      "methods": ["POST","GET","PUT","OPTIONS","DELETE"]
+      "methods": ["POST", "GET", "PUT", "OPTIONS", "DELETE"]
     }
   ]
 }
