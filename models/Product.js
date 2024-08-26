@@ -1,17 +1,19 @@
 const mongoose = require('mongoose');
 
 const productSchema = new mongoose.Schema({
-    name: { type: String, required: true },
-    price: { type: Number, required: true },
-    description: { type: String, required: true },
-    sizes:{type: [String], required: true},
-    images: [{
-        filename: String,
-        id: mongoose.Schema.Types.ObjectId,
-        url: String
-    }],
-    category: {type: String, required : true},
-    subcategory: {type: String, required : true},
+  name: String,
+  price: Number,
+  description: String,
+  sizes: [String],
+  images: [{
+    url: String,
+    public_id: String,
+    format: String,
+    width: Number,
+    height: Number,
+  }],
+  category: String,
+  subcategory: String,
 });
 
 const Product = mongoose.model('Product', productSchema);

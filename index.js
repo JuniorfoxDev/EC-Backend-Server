@@ -6,6 +6,7 @@ const { MongoClient, GridFSBucket } = require('mongodb');
 const bcrypt = require('bcrypt');
 const { Readable } = require('stream');
 const path = require('path');
+const cloudinary = require('cloudinary').v2; // Import Cloudinary
 const app = express();
 const saltRounds = 10;
 
@@ -23,6 +24,13 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 
+// Cloudinary configuration
+cloudinary.config({
+  cloud_name: 'dtj9srbsk',
+  api_key: '335927119333625',
+  api_secret: 'DQ9cWsodcxUyHKvM2jtCD_WbFx8',
+});
+
 // MongoDB URI
 const mongoURI = "mongodb+srv://vaibhavmeshram2908:vaibhav123@cluster0.1pkf5.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
 
@@ -34,22 +42,6 @@ mongoose.connect(mongoURI, {
   bufferCommands: true
 }).then(() => {
   console.log('Connected to MongoDB');
-}).catch(error => {
-  console.error('Error connecting to MongoDB:', error);
-});
-
-// Connect to MongoDB using MongoClient and GridFSBucket
-const client = new MongoClient(mongoURI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-  serverSelectionTimeoutMS: 30000
-});
-
-let bucket;
-client.connect().then(() => {
-  const db = client.db('test'); // Replace 'test' with your database name
-  bucket = new GridFSBucket(db, { bucketName: 'uploads' });
-  console.log('Connected to MongoDB and GridFSBucket initialized.');
 }).catch(error => {
   console.error('Error connecting to MongoDB:', error);
 });
@@ -108,39 +100,27 @@ app.post('/upload', upload.array('images'), async (req, res) => {
   try {
     const filePromises = files.map(file => {
       return new Promise((resolve, reject) => {
-        const uploadStream = bucket.openUploadStream(file.originalname, {
-          contentType: file.mimetype
-        });
-
-        const readableStream = Readable.from(file.buffer);
-        readableStream.pipe(uploadStream);
-
-        uploadStream.on('finish', () => {
+        cloudinary.uploader.upload_stream({ resource_type: 'auto' }, (error, result) => {
+          if (error) return reject(error);
           resolve({
-            _id: uploadStream.id,
-            filename: file.originalname,
-            contentType: file.mimetype,
-            length: file.size,
-            url: `https://ec-backend-server.vercel.app/files/${uploadStream.filename}`
+            url: result.secure_url,
+            public_id: result.public_id,
+            format: result.format,
+            width: result.width,
+            height: result.height,
           });
-        });
-
-        uploadStream.on('error', reject);
+        }).end(file.buffer);
       });
     });
 
     const filesData = await Promise.all(filePromises);
-
-    const filesToSave = filesData.map(fileData => new File(fileData));
-
-    const savedFiles = await Promise.all(filesToSave.map(file => file.save()));
 
     const newProduct = new Product({
       name,
       price,
       description,
       sizes: Array.isArray(sizes) ? sizes : [sizes],
-      images: savedFiles,
+      images: filesData,
       category,
       subcategory,
     });
@@ -205,34 +185,22 @@ app.put('/products/:id', upload.array('images'), async (req, res) => {
     if (req.files && req.files.length > 0) {
       const filePromises = req.files.map(file => {
         return new Promise((resolve, reject) => {
-          const uploadStream = bucket.openUploadStream(file.originalname, {
-            contentType: file.mimetype,
-          });
-
-          const readableStream = Readable.from(file.buffer);
-          readableStream.pipe(uploadStream);
-
-          uploadStream.on('finish', () => {
+          cloudinary.uploader.upload_stream({ resource_type: 'auto' }, (error, result) => {
+            if (error) return reject(error);
             resolve({
-              _id: uploadStream.id,
-              filename: file.originalname,
-              contentType: file.mimetype,
-              length: file.size,
-              url: `https://ec-backend-server.vercel.app/files/${uploadStream.filename}`,
+              url: result.secure_url,
+              public_id: result.public_id,
+              format: result.format,
+              width: result.width,
+              height: result.height,
             });
-          });
-
-          uploadStream.on('error', reject);
+          }).end(file.buffer);
         });
       });
 
       const filesData = await Promise.all(filePromises);
 
-      const filesToSave = filesData.map(fileData => new File(fileData));
-
-      const savedFiles = await Promise.all(filesToSave.map(file => file.save()));
-
-      updateFields.images = savedFiles;
+      updateFields.images = filesData;
     }
 
     const updatedProduct = await Product.findByIdAndUpdate(id, updateFields, {
@@ -250,45 +218,8 @@ app.put('/products/:id', upload.array('images'), async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 });
+
 app.use('/files', express.static(path.join(__dirname, 'files')));
-// File download route
-app.get('/files/:filename', async (req, res) => {
-  try {
-    const { filename } = req.params;
-    
-    // Find file by filename
-    const file = await bucket.find({ filename }).toArray();
-
-    if (!file || file.length === 0) {
-      return res.status(404).json({ message: "File not found" });
-    }
-
-    // Set CORS headers
-    res.setHeader('Access-Control-Allow-Origin', 'https://ec-frontend-chi.vercel.app');
-    res.setHeader('Access-Control-Allow-Methods', 'GET');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    res.setHeader('Content-Type', file[0].contentType || 'application/octet-stream');
-    // Open a download stream for the file
-    const downloadStream = bucket.openDownloadStreamByName(filename);
-
-    downloadStream.on('data', (chunk) => {
-      res.write(chunk);
-    });
-
-    downloadStream.on('error', (err) => {
-      console.error('Stream error:', err);
-      res.sendStatus(500);
-    });
-
-    downloadStream.on('end', () => {
-      res.end();
-    });
-  } catch (error) {
-    console.error('Server error:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
 
 // Categories route
 app.get('/categories', async (req, res) => {
@@ -320,12 +251,16 @@ app.get('/categories/:subcategory', async (req, res) => {
 app.delete('/products/:id', async (req, res) => {
   const { id } = req.params;
   try {
-    await Product.deleteOne({ _id: id });
-    res.json({ message: "Product deleted successfully" });
+    await Product.findByIdAndDelete(id);
+    res.json({ message: 'Product deleted successfully' });
   } catch (error) {
     console.error('Error deleting product:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
 
-module.exports = app;
+// Start the server
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
