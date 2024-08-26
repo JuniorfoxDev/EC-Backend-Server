@@ -265,8 +265,10 @@ app.get('/files/:filename', async (req, res) => {
 
     // Set CORS headers
     res.setHeader('Access-Control-Allow-Origin', 'https://ec-frontend-chi.vercel.app');
+    res.setHeader('Access-Control-Allow-Methods', 'GET');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
     res.setHeader('Content-Type', file[0].contentType || 'application/octet-stream');
-
     // Open a download stream for the file
     const downloadStream = bucket.openDownloadStreamByName(filename);
 
